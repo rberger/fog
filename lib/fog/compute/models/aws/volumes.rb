@@ -12,7 +12,8 @@ module Fog
 
         model Fog::AWS::Compute::Volume
 
-        # Used to create a volume.  There are 3 arguments and availability_zone and size are required.  You can generate a new key_pair as follows:
+        # Used to create a volume.  There are 3 arguments and availability_zone and size 
+        # are required, snapshot_id is optional.  You can generate a EBS Volume as follows:
         # AWS.volumes.create(:availability_zone => 'us-east-1a', :size => 10)
         #
         # ==== Returns
