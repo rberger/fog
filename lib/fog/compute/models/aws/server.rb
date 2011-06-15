@@ -166,7 +166,7 @@ module Fog
         end
 
         def setup(credentials = {})
-          requires :identity, :ip_address, :username
+          requires :identity, :public_ip_address, :username
           require 'json'
 
           commands = [
@@ -181,7 +181,7 @@ module Fog
           Timeout::timeout(120) do
             begin
               Timeout::timeout(4) do
-                Fog::SSH.new(ip_address, username, credentials).run(commands)
+                Fog::SSH.new(public_ip_address, username, credentials).run(commands)
               end
             rescue Net::SSH::AuthenticationFailed, Timeout::Error
               retry
@@ -200,12 +200,12 @@ module Fog
           Fog::SSH.new(public_ip_address, username, options).run(commands)
         end
 
-        def scp(local_path, remote_path)
+        def scp(local_path, remote_path, upload_options = {})
           requires :public_ip_address, :username
 
-          options = {}
-          options[:key_data] = [private_key] if private_key
-          Fog::SCP.new(public_ip_address, username, options).upload(local_path, remote_path)
+          scp_options = {}
+          scp_options[:key_data] = [private_key] if private_key
+          Fog::SCP.new(public_ip_address, username, scp_options).upload(local_path, remote_path, upload_options)
         end
 
         def start

@@ -17,7 +17,7 @@ module Fog
       request :complete_multipart_upload
       request :copy_object
       request :delete_bucket
-			request :delete_bucket_policy
+      request :delete_bucket_policy
       request :delete_bucket_website
       request :delete_object
       request :get_bucket
@@ -25,7 +25,7 @@ module Fog
       request :get_bucket_location
       request :get_bucket_logging
       request :get_bucket_object_versions
-			request :get_bucket_policy
+      request :get_bucket_policy
       request :get_bucket_versioning
       request :get_bucket_website
       request :get_object
@@ -42,7 +42,7 @@ module Fog
       request :put_bucket
       request :put_bucket_acl
       request :put_bucket_logging
-			request :put_bucket_policy
+      request :put_bucket_policy
       request :put_bucket_versioning
       request :put_bucket_website
       request :put_object
@@ -62,11 +62,17 @@ module Fog
         end
 
         def url(params, expires)
+          params[:headers] ||= {}
           params[:headers]['Date'] = expires.to_i
-          params[:path] = CGI.escape(params[:path]).gsub('%2F', '/')
-          query = [params[:query]].compact
+          params[:path] = Fog::AWS.escape(params[:path]).gsub('%2F', '/')
+          query = []
+          if params[:query]
+            for key, value in params[:query]
+              query << "#{key}=#{Fog::AWS.escape(value)}"
+            end
+          end
           query << "AWSAccessKeyId=#{@aws_access_key_id}"
-          query << "Signature=#{CGI.escape(signature(params))}"
+          query << "Signature=#{Fog::AWS.escape(signature(params))}"
           query << "Expires=#{params[:headers]['Date']}"
           "https://#{@host}/#{params[:path]}?#{query.join('&')}"
         end
@@ -271,7 +277,7 @@ module Fog
         def signature(params)
           string_to_sign =
 <<-DATA
-#{params[:method]}
+#{params[:method].to_s.upcase}
 #{params[:headers]['Content-MD5']}
 #{params[:headers]['Content-Type']}
 #{params[:headers]['Date']}
@@ -303,12 +309,33 @@ DATA
 
           canonical_resource  = @path.dup
           unless subdomain.nil? || subdomain == @host
-            canonical_resource << "#{CGI.escape(subdomain).downcase}/"
+            canonical_resource << "#{Fog::AWS.escape(subdomain).downcase}/"
           end
           canonical_resource << params[:path].to_s
           canonical_resource << '?'
           for key in (params[:query] || {}).keys.sort
-            if %w{acl location logging notification partNumber policy requestPayment torrent uploadId uploads versionId versioning versions website}.include?(key)
+            if %w{
+              acl
+              location
+              logging
+              notification
+              partNumber
+              policy
+              requestPayment
+              reponse-cache-control
+              response-content-disposition
+              response-content-encoding
+              response-content-language
+              response-content-type
+              response-expires
+              torrent
+              uploadId
+              uploads
+              versionId
+              versioning
+              versions
+              website
+            }.include?(key)
               canonical_resource << "#{key}#{"=#{params[:query][key]}" unless params[:query][key].nil?}&"
             end
           end
