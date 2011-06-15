@@ -1,0 +1,17 @@
+# These are examples of using the fog irb
+
+# Find all volumes created since a date
+vols = AWS.volumes.find_all { |v| v.created_at > Time.local(2011,6, 14,18,17,0,0) }
+
+# Find all servers whose name contains a string
+swarms = AWS.servers.find_all { |s| s.tags["Name"] =~ /^swarm\d+-production-new/ }
+
+# Adding tags to a resource (ebs volume)
+vols.each do |v|
+  t = AWS.tags.new
+  t.resource_id = v.id
+  s = AWS.servers.get(v.server_id)
+  t.key = "Name"
+  t.value = "#{s.tags['Name']} /mnt sdf"
+  t.save
+end
