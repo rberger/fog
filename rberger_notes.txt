@@ -6,6 +6,25 @@ vols = AWS.volumes.find_all { |v| v.created_at > Time.local(2011,6, 14,18,17,0,0
 # Find all servers whose name contains a string
 swarms = AWS.servers.find_all { |s| s.tags["Name"] =~ /^swarm\d+-production-new/ }
 
+# Create some volumes and same the info in an array
+vols = []
+(0..2).each do |i|
+  vols << AWS.volumes.new(:availability_zone => "us-east-1d", :size => 1000)
+end
+server = AWS.servers.get("i-f70ba79c")
+# Attach them
+%w(f g h).each_with_index do |l, i|
+  puts "#{i} sd#{l} id: #{vols[i].id}"
+  vols[i].device = "/dev/sd#{l}"
+  vols[i].server = server
+  vols[i].save
+  t = AWS.tags.new
+  t.resource_id = vols[i].id
+  t.key = "Name"
+  t.value = "#{server.tags['Name']} /mnt#{i+1} sd#{l}"
+  t.save
+end
+
 # Adding tags to a resource (ebs volume)
 vols.each do |v|
   t = AWS.tags.new
